@@ -4,6 +4,7 @@ require 'test/test_helper'
 module Nanotest
   class << self
     def failures() @@failures end
+    def errors() @@errors end
     def dots() @@dots end
   end
 
@@ -25,6 +26,7 @@ class TestNanotest < MiniTest::Unit::TestCase
   def teardown
     Nanotest::dots.clear
     Nanotest::failures.clear
+    Nanotest::errors.clear
   end
 
   test "api" do
@@ -49,26 +51,45 @@ class TestNanotest < MiniTest::Unit::TestCase
     assert_equal 'F', Nanotest::dots.last
     refute_empty Nanotest::failures
   end
+  
+  test "assertion raises error" do
+    assert_nothing_raised { Nanotest.assert { raise 'hell' } }
+    assert_equal 'E', Nanotest::dots.last
+    refute_empty Nanotest::errors
+  end
 
   test "failure message" do
     @line = __LINE__; Nanotest.assert { false }
     assert_equal 1, Nanotest::failures.size
     assert_includes Nanotest::failures, "(%s:%0.3d) assertion failed" % [__FILE__, @line]
   end
+  
+  test "error message" do
+    @line = __LINE__; Nanotest.assert { raise 'hell' }
+    assert_equal 1, Nanotest::errors.size
+    assert_includes Nanotest::errors, "(%s:%0.3d) assertion raised error" % [__FILE__, @line]
+  end
 
   test "custom failure message, file, line" do
     Nanotest.assert('foo','bar',2) { false }
     assert_includes Nanotest::failures, "(bar:002) foo"
   end
+  
+  test "custom failure message, file, line with error" do
+    Nanotest.assert('foo','bar',2) { raise 'hell' }
+    assert_includes Nanotest::errors, "(bar:002) foo"
+  end
 
   test "displays results" do
     Nanotest.assert { true }
-    Nanotest.assert { false }; line1 = __LINE__
-    Nanotest.assert { false }; line2 = __LINE__
-    expected = <<-OUT.gsub(/^\s*/,'').strip % [__FILE__, line1, __FILE__, line2]
-      .FF
+    Nanotest.assert { false };        line1 = __LINE__
+    Nanotest.assert { false };        line2 = __LINE__
+    Nanotest.assert { raise 'hell' }; line3 = __LINE__
+    expected = <<-OUT.gsub(/^\s*/,'').strip % [__FILE__, line1, __FILE__, line2, __FILE__, line3]
+      .FFE
       (%s:%0.3d) assertion failed
       (%s:%0.3d) assertion failed
+      (%s:%0.3d) assertion raised error
     OUT
     assert_equal expected, Nanotest.results
   end
