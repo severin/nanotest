@@ -65,9 +65,9 @@ class TestNanotest < MiniTest::Unit::TestCase
   end
   
   test "error message" do
-    @line = __LINE__; Nanotest.assert { raise 'hell' }
+    @line = __LINE__; Nanotest.assert { raise RuntimeError, 'an error' }
     assert_equal 1, Nanotest::errors.size
-    assert_includes Nanotest::errors, "(%s:%0.3d) assertion raised error" % [__FILE__, @line]
+    assert_includes Nanotest::errors, "(%s:%0.3d) assertion raised error: RuntimeError: an error" % [__FILE__, @line]
   end
 
   test "custom failure message, file, line" do
@@ -82,14 +82,14 @@ class TestNanotest < MiniTest::Unit::TestCase
 
   test "displays results" do
     Nanotest.assert { true }
-    Nanotest.assert { false };        line1 = __LINE__
-    Nanotest.assert { false };        line2 = __LINE__
-    Nanotest.assert { raise 'hell' }; line3 = __LINE__
+    Nanotest.assert { false };                          line1 = __LINE__
+    Nanotest.assert { false };                          line2 = __LINE__
+    Nanotest.assert { raise RuntimeError, 'an error' }; line3 = __LINE__
     expected = <<-OUT.gsub(/^\s*/,'').strip % [__FILE__, line1, __FILE__, line2, __FILE__, line3]
       .FFE
       (%s:%0.3d) assertion failed
       (%s:%0.3d) assertion failed
-      (%s:%0.3d) assertion raised error
+      (%s:%0.3d) assertion raised error: RuntimeError: an error
     OUT
     assert_equal expected, Nanotest.results
   end

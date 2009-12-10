@@ -13,7 +13,7 @@ module Nanotest
       @@dots << '.'
     end
   rescue Exception => e
-    @@errors << "(%s:%0.3d) %s" % [file, line, msg || "assertion raised error"]
+    @@errors << "(%s:%0.3d) %s" % [file, line, msg || "assertion raised error: #{e.class}: #{e.message}"]
     @@dots << 'E'  
   end
 
